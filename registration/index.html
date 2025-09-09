@@ -4,7 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Event Registration Form</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/libphonenumber-js/1.10.44/libphonenumber-js.min.js"></script>
 <style>
+* {
+    box-sizing: border-box;
+}
 body {
 font-family: Arial, sans-serif;
 max-width: 600px;
@@ -26,6 +30,19 @@ label {
 display: block;
 margin-bottom: 5px;
 font-weight: bold;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: auto;
+    margin-left: 8px; /* Small gap between text and checkbox */
+    margin-bottom: 0;
 }
 input, select, textarea {
 width: 100%;
@@ -73,9 +90,9 @@ margin-top: 10px;
 <div class="error" id="emailError"></div>
 </div>
 <div class="form-group">
-<label for="phone">Phone Number *</label>
-<input type="tel" id="phone" name="phone" required>
-
+  <label for="phone">Phone Number *</label>
+  <input type="tel" id="phone" name="phone" required placeholder="+1234567890">
+  <small style="color: #666; font-size: 12px;">Include country code (e.g., +1 for US, +44 for UK)</small>
 <div class="error" id="phoneError"></div>
 </div>
 <div class="form-group">
@@ -101,19 +118,18 @@ years)</option>
 placeholder="e.g., AI, Web Development, Mobile Apps"></textarea>
 </div>
 <div class="form-group">
-<label>
-<input type="checkbox" id="newsletter"
-name="newsletter">
-Subscribe to our newsletter
-</label>
+    <label class="checkbox-label">
+        Subscribe to our newsletter
+        <input type="checkbox" id="newsletter" name="newsletter">
+    </label>
 </div>
+
 <div class="form-group">
-<label>
-<input type="checkbox" id="terms" name="terms"
-required>
-I agree to the terms and conditions *
-</label>
-<div class="error" id="termsError"></div>
+    <label class="checkbox-label">
+        I agree to the terms and conditions *
+        <input type="checkbox" id="terms" name="terms" required>
+    </label>
+    <div class="error" id="termsError"></div>
 </div>
 <button type="submit">Register Now</button>
 <div class="success" id="successMessage"></div>
@@ -136,37 +152,44 @@ const terms = document.getElementById('terms').checked;
 let isValid = true;
 // Validate full name
 if (fullName.length < 2) {
-showError('nameError', 'Full name must be at least 2
-characters long');
+showError('nameError', 'Full name must be at least 2 characters long');
 isValid = false;
 }
 // Validate email
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 if (!emailRegex.test(email)) {
-showError('emailError', 'Please enter a valid email
-address');
+showError('emailError', 'Please enter a valid email address');
 isValid = false;
 }
-// Validate phone
-const phoneRegex = /^[0-9]{10}$/;
-if (!phoneRegex.test(phone.replace(/\D/g, ''))) {
-showError('phoneError', 'Please enter a valid 10-digit
-phone number');
-isValid = false;
+// Validate phone (international)
+// Validate phone (international)
+try {
+  const phoneNumber = libphonenumber.parsePhoneNumber(phone);
+  if (!phoneNumber.isValid()) {
+    showError('phoneError', 'Please enter a valid phone number with country code (e.g., +1234567890)');
+    isValid = false;
+  } else {
+    // Store normalized E.164 format for submission
+    document.getElementById('phone').setAttribute('data-normalized', phoneNumber.format('E.164'));
+  }
+} catch (error) {
+  showError('phoneError', 'Please enter a valid phone number with country code (e.g., +1234567890)');
+  isValid = false;
 }
 // Validate experience
 if (!experience) {
-showError('experienceError', 'Please select your experience
-level');
+showError('experienceError', 'Please select your experience level');
 isValid = false;
 }
 // Validate terms
 if (!terms) {
-showError('termsError', 'You must agree to the terms and
-conditions');
+showError('termsError', 'You must agree to the terms and conditions');
 isValid = false;
 }
 if (isValid) {
+// Get the normalized phone number for submission
+const normalizedPhone = document.getElementById('phone').getAttribute('data-normalized');
+console.log('Normalized phone for submission:', normalizedPhone);
 document.getElementById('successMessage').textContent =
 'Registration successful! Thank you for registering.';
 document.getElementById('registrationForm').reset();
